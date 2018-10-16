@@ -18,7 +18,7 @@ export const ORDER_COLUMNS = ['*'];
  * @type {Readonly<OrderCollectionOptions>}
  */
 const DEFAULT_ORDER_COLLECTION_OPTIONS = Object.freeze(
-  /** @type {OrderCollectionOptions}*/ ({
+  /** @type {OrderCollectionOptions}*/({
     order: 'asc',
     page: 1,
     perPage: 20,
@@ -33,9 +33,14 @@ const DEFAULT_ORDER_COLLECTION_OPTIONS = Object.freeze(
  * @param {Partial<OrderCollectionOptions>} opts Options for customizing the query
  * @returns {Promise<Order[]>} the orders
  */
-export async function getAllOrders(opts = {}) {
+export async function getAllOrders(opts = {}, whereClause) {
+  /*
+  getAllOrders({ sort: 'shippeddate', order: 'desc'});
+  getAllOrders({ sort: 'customerid', order: 'asc' });
+  getAllOrders({ page: 3, perPage: 25 });
+  getCustomerOrders('ALFKI', { page: 5, perPage: 10 });
+  */
   // Combine the options passed into the function with the defaults
-
   /** @type {OrderCollectionOptions} */
   let options = {
     ...DEFAULT_ORDER_COLLECTION_OPTIONS,
@@ -43,9 +48,19 @@ export async function getAllOrders(opts = {}) {
   };
 
   const db = await getDb();
+  let sortClause = '';
+  if (options.sort && options.order) {
+    sortClause = `ORDER BY ${options.sort} ${options.order.toUpperCase()}`;
+  }
+
+  let pageClause = '';
+  if (options.page && options.perPage) {
+    pageClause = `LIMIT ${options.perPage} OFFSET ${(options.page - 1) * options.perPage}`
+  }
   return await db.all(sql`
 SELECT ${ALL_ORDERS_COLUMNS.join(',')}
-FROM CustomerOrder`);
+FROM CustomerOrder ${whereClause} ${sortClause} ${pageClause}
+`);
 }
 
 /**
@@ -55,7 +70,12 @@ FROM CustomerOrder`);
  */
 export async function getCustomerOrders(customerId, opts = {}) {
   // ! This is going to retrieve ALL ORDERS, not just the ones that belong to a particular customer. We'll need to fix this
-  return getAllOrders(opts);
+  /** @type {OrderCollectionOptions} */
+  let options = {
+    ...{ page: 1, perPage: 20, sort: 'shippeddate', order: 'asc' },
+    ...opts
+  }
+  return getAllOrders(options, `WHERE customerid = '${customerId}'`);
 }
 
 /**
