@@ -141,7 +141,59 @@ export async function getOrderWithDetails(id) {
  * @returns {Promise<{id: string}>} the newly created order
  */
 export async function createOrder(order, details = []) {
-  return Promise.reject('Orders#createOrder() NOT YET IMPLEMENTED');
+  /*
+   createOrder(
+    {
+     employeeid: 3,
+     customerid: 'ALFKI',
+     shipcity: 'Minneapolis, MN',
+     shipaddress: '60 South 6th St Suite 3625',
+     shipname: 'Frontend Masters',
+     shipvia: 1,
+     shipregion: 1,
+     shipcountry: 'USA',
+     shippostalcode: '455402',
+     requireddate: '2018-03-22T23:38:08.410Z',
+     freight: 2.17
+    },
+    [ { productid: 17, unitprice: 4.11, quantity: 4, discount: 0 },
+      { productid: 11, unitprice: 3.37, quantity: 1, discount: 0.10 }]
+  );
+                              
+  */
+  const db = await getDb();
+  let result = await db.run(
+    sql`INSERT INTO CustomerOrder (
+      employeeid, 
+      customerid, 
+      shipcity, 
+      shipaddress, 
+      shipname, 
+      shipvia, 
+      shipregion, 
+      shipcountry, 
+      shippostalcode, 
+      requireddate, 
+      freight) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+    order.employeeid,
+    order.customerid,
+    order.shipcity,
+    order.shipaddress,
+    order.shipname,
+    order.shipvia,
+    order.shipregion,
+    order.shipcountry,
+    order.shippostalcode,
+    order.requireddate,
+    order.freight
+    ,
+  );
+
+  if (!result || typeof result.lastID === 'undefined') {
+    throw new Error('no entry created');
+  }
+  return { id: result.lastID };
 }
 
 /**
@@ -150,7 +202,11 @@ export async function createOrder(order, details = []) {
  * @returns {Promise<any>}
  */
 export async function deleteOrder(id) {
-  return Promise.reject('Orders#deleteOrder() NOT YET IMPLEMENTED');
+  const db = await getDb();
+  return await db.run(
+    sql`DELETE FROM CustomerOrder WHERE id = $1`,
+    id
+  );
 }
 
 /**
