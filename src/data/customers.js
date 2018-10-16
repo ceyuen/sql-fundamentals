@@ -31,8 +31,12 @@ export async function getAllCustomers(options = {}) {
     whereClause = `WHERE (lower(companyname) LIKE lower('%${options.filter}%')) OR (lower(contactname) LIKE lower('%${options.filter}%'))`
   }
   return await db.all(sql`
-SELECT ${ALL_CUSTOMERS_COLUMNS.join(',')}
-FROM Customer ${whereClause}`);
+  SELECT ${ALL_CUSTOMERS_COLUMNS.map(x => 'c.' + x).join(',')}, count(co.id) AS ordercount
+  FROM Customer AS c
+  LEFT JOIN CustomerOrder as co ON c.id = co.customerid
+  ${whereClause}
+  GROUP BY c.id
+`);
 }
 
 /**

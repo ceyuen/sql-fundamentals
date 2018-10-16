@@ -13,8 +13,11 @@ const ALL_SUPPLIERS_COLUMNS = ['id', 'contactname', 'companyname'];
 export async function getAllSuppliers() {
   const db = await getDb();
   return await db.all(sql`
-SELECT ${ALL_SUPPLIERS_COLUMNS.join(',')}
-FROM Supplier`);
+SELECT ${ALL_SUPPLIERS_COLUMNS.map(x => 's.' + x).join(',')}, string_agg(p.productname, ', ') AS productlist
+FROM Supplier AS s
+LEFT JOIN (SELECT * FROM Product ORDER BY productname ASC) AS p ON s.id = p.supplierid
+GROUP BY s.id
+`);
 }
 
 /**
